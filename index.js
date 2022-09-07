@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const shortId = require('shortid');
+const validUrl = require('valid-url');
 const app = express();
 
 // Basic Configuration
@@ -15,6 +16,13 @@ app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
 
+mongoose 
+ .connect(process.env.MONGO_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true})   
+ .then(() => console.log("Database connected!"))
+ .catch(err => console.log(err));
+
 app.get('/', function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
@@ -25,11 +33,6 @@ app.get('/api/hello', function(req, res) {
 });
 
 // URL Shortener Microservice
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
-
 const urlSchema = new mongoose.Schema({
   original_url: {
     type: String,
@@ -43,8 +46,34 @@ const Url = mongoose.model('Url', urlSchema);
 app.post('/api/shorturl', (req, res) => {
   var url = req.body.url;
   var urlGenerate = shortId.generate();
+
+  if (!validUrl.isWebUri(url)) {
+    res.json({ error: 'invalid url' });
+  } else {
+    var URL = new Url({
+      original_url: url,
+      short_url: urlGenerate
+    });
   
-  res.json({ original_url: url, short_url: urlGenerate });
+    URL.save((err, data) => {
+      if (err) {
+        res.send({ error: 'invalid URL' });
+      } else {
+        res.send({ original_url: data.original_url, short_url: data.short_url });
+      }
+    });
+  }
+});
+
+app.get('/api/shorturl/:short_url', (req, res) => {
+  var shortUrl = req.params.short_url;
+  Url.find({short_url: shortUrl}, (err, data) => {
+    if (err) {
+      res.send({ error: 'invalid URL' });
+    } else {
+      res.redirect(data[0].original_url);
+    }
+  })
 });
 
 app.listen(port, function() {

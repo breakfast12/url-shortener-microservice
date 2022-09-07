@@ -25,7 +25,7 @@ app.get('/api/hello', function(req, res) {
 });
 
 // URL Shortener Microservice
-const connection = mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });

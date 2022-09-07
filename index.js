@@ -43,18 +43,7 @@ const Url = mongoose.model('Url', urlSchema);
 app.post('/api/shorturl', (req, res) => {
   var url = req.body.url;
   var urlGenerate = shortId.generate();
-
-  // var postURL = new Url({
-  //   original_url: url,
-  //   short_url: urlGenerate
-  // });
-
-  // postURL.save((err, data) => {
-  //   if (err) {
-  //     return console.log(err);
-  //   }
-  // });
-
+  
   res.json({ original_url: url, short_url: urlGenerate });
 });
 
